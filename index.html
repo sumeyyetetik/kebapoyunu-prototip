@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Döner Ready! 3D — Geleneksel Türk Döner Salonu</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game-wrapper">
+    <!-- TOP HUD -->
+    <header id="top-hud">
+      <div class="hud-left">
+        <div class="level-badge">
+          <div class="nazar-ring" title="Nazar Boncuğu"></div>
+          <div>
+            <div class="level-title" id="level-title">SEVİYE 1: Siftah Zamanı</div>
+            <div class="xp-row">
+              <div class="level-progress-bg">
+                <div class="level-progress-fill" id="level-progress-fill" style="width: 10%"></div>
+              </div>
+              <span class="xp-badge" id="xp-display">0 XP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RAW MATERIAL STOCKS (SUPPLY TRUCK ECONOMY) -->
+        <div class="stock-pills">
+          <div class="stock-pill" id="meat-stock-pill" title="Tavuk Tedarik Kamyonundan Taze Tavuk Et Stoğu (20 ₺) al">
+            <span>🍗 Tavuk Et Stoğu:</span>
+            <strong id="raw-meat-count">6</strong>
+          </div>
+          <div class="stock-pill" id="drink-stock-pill" title="Ayran & İçecek Kamyonundan İçecek Buzdolabını (15 ₺) doldur">
+            <span>🥛 İçecek Buzdolabı:</span>
+            <strong id="raw-drink-count">11</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <div id="audio-start-hint" class="audio-hint">
+          🎵 Klasik Türk Müziği & Doğal Mangal Cızırtısı için ekrana dokun!
+        </div>
+        <div id="bereket-banner" class="hidden">
+          🔥 BEREKET MODU AKTİF! (2x ÜRETİM & HIZ) — <span id="bereket-timer">30</span>s
+        </div>
+        <div id="combo-banner" class="hidden">
+          🥙 USTA ELİ DEĞDİ! <span id="combo-text">x1.5 Bahşiş</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div class="cash-pill">
+          <span class="cash-icon">💵</span>
+          <span id="cash-amount">160</span>
+          <span class="currency">₺</span>
+        </div>
+
+        <!-- SEPARATE MUSIC & SIZZLE VOLUME CONTROLS -->
+        <div class="audio-mixer-card">
+          <div class="mixer-row">
+            <button id="music-mute-btn" class="mixer-icon-btn" title="Müziği Aç / Kapat">🎵</button>
+            <div class="mixer-slider-wrap">
+              <div class="mixer-label-line">
+                <span>Müzik</span>
+                <span id="music-vol-pct">60%</span>
+              </div>
+              <input type="range" id="music-vol-slider" min="0" max="100" value="60" />
+            </div>
+            <button id="music-next-btn" class="mixer-mini-btn" title="Sıradaki Klasik Türk Müziği Eserine Geç">⏭️</button>
+          </div>
+
+          <div class="mixer-row">
+            <button id="sizzle-mute-btn" class="mixer-icon-btn" title="Doğal Mangal Cızırtısı ve Efektleri Aç / Kapat">🔥</button>
+            <div class="mixer-slider-wrap">
+              <div class="mixer-label-line">
+                <span>Mangal Cızırtısı</span>
+                <span id="sizzle-vol-pct">50%</span>
+              </div>
+              <input type="range" id="sizzle-vol-slider" min="0" max="100" value="50" />
+            </div>
+          </div>
+
+          <div class="now-playing-line" id="current-track-label">
+            🎼 Kürdilihicazkar Longa
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- EVENT ALERTS & DRIVE-THRU BARRIER BUTTON -->
+    <div id="alert-container"></div>
+
+    <button id="barrier-emergency-btn" class="hidden">
+      🚧 DRIVE-THRU HIRSIZI KAÇIYOR! KAPANI İNDİR! (<span id="barrier-timer">3.5</span>s)
+    </button>
+
+    <!-- 3D WEBGL SCENE CONTAINER + 2D OVERLAY CANVAS -->
+    <div id="webgl-container"></div>
+    <canvas id="hud-canvas"></canvas>
+
+    <!-- BOTTOM ACTION BAR -->
+    <footer id="bottom-bar">
+      <button class="upgrade-btn hr-btn" id="open-hr-modal">
+        <span class="btn-emoji">🏢</span>
+        <div class="btn-label">
+          <strong>HR (İK MERKEZİ)</strong>
+          <small>Usta & Garson Seviyeleri</small>
+        </div>
+      </button>
+
+      <button class="upgrade-btn usta-btn" id="open-area-modal">
+        <span class="btn-emoji">🏗️</span>
+        <div class="btn-label">
+          <strong>ALAN & SEVİYELER</strong>
+          <small>Masa, Ocak & Genişleme</small>
+        </div>
+      </button>
+
+      <button class="upgrade-btn menu-btn" id="open-menu-modal">
+        <span class="btn-emoji">🥙</span>
+        <div class="btn-label">
+          <strong>MENÜ & KÂR</strong>
+          <small>Döner & İçecek Kalitesi</small>
+        </div>
+      </button>
+
+      <button class="upgrade-btn test-btn" id="open-test-modal">
+        <span class="btn-emoji">🛠️</span>
+        <div class="btn-label">
+          <strong>TEST PANELİ</strong>
+          <small>Hızlı Deneme / NPC</small>
+        </div>
+      </button>
+    </footer>
+
+    <!-- HR (HUMAN RESOURCES: USTA & GARSON LEVEL CENTER) MODAL -->
+    <div id="hr-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>🏢 HR (İnsan Kaynakları) — Seviye Merkezi</h2>
+          <button class="close-modal" data-close="hr-modal">✕</button>
+        </div>
+        <p class="modal-sub">Restorandaki HR masasına yürüyerek veya buradan Usta ve Garsonların seviyesini yükselt!</p>
+
+        <div class="hr-section-title" id="usta-lv-header">👨‍🍳 Usta (Oyuncu) — Seviye 1</div>
+        <div class="upgrade-list" id="usta-upgrade-list"></div>
+
+        <div class="hr-section-title" id="staff-lv-header" style="margin-top: 16px;">🧑‍🍳 Garsonlar & Güvenlik — Seviye 1</div>
+        <div class="upgrade-list" id="hr-upgrade-list"></div>
+      </div>
+    </div>
+
+    <!-- AREA & LEVEL PROGRESSION MODAL -->
+    <div id="area-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>🏗️ Seviye Seviye Alan & İstasyon Genişletme</h2>
+          <button class="close-modal" data-close="area-modal">✕</button>
+        </div>
+        <p class="modal-sub">Her seviyede yeni bir masa, ocak veya satış kanalı açılır. Yeşil zemine basarak veya buradan inşa et:</p>
+        <div class="upgrade-list" id="area-upgrade-list"></div>
+      </div>
+    </div>
+
+    <!-- MENU QUALITY MODAL -->
+    <div id="menu-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>🥙 Ürün Kalitesi & Tedarik Kâr Oranları</h2>
+          <button class="close-modal" data-close="menu-modal">✕</button>
+        </div>
+        <p class="modal-sub">Tedarik kamyonundan aldığın hammaddeleri işleyip yüksek kârla sat (1 Banknot = 5 ₺)</p>
+        <div class="upgrade-list" id="menu-upgrade-list"></div>
+      </div>
+    </div>
+
+    <!-- TEST / SANDBOX MODAL -->
+    <div id="test-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>🛠️ Geliştirici Test & Simülasyon Paneli</h2>
+          <button class="close-modal" data-close="test-modal">✕</button>
+        </div>
+        <p class="modal-sub">Oyun akışını normal oynayabilir veya istediğin mekaniği anında test edebilirsin:</p>
+        <div class="test-grid">
+          <button class="sim-btn" id="sim-add-cash">💵 +2,500 ₺ Ekle</button>
+          <button class="sim-btn" id="sim-unlock-next">🔓 Sıradaki Alanı Aç (Seviye Atla)</button>
+          <button class="sim-btn" id="sim-unlock-all">🚀 Tüm Alanları Aç (Seviye 10)</button>
+          <button class="sim-btn" id="sim-spawn-angry">💢 Kaynak Yapan Müşteri (Sıra İhlali) Çağır</button>
+          <button class="sim-btn" id="sim-spawn-millionaire">💎 Gizli Milyoner (Dilenci) Çağır</button>
+          <button class="sim-btn" id="sim-spawn-thief">🦹‍♂️ Normal Hırsız Çağır</button>
+          <button class="sim-btn" id="sim-spawn-drivethief">🏎️ Drive-Thru Hırsızı Çağır</button>
+          <button class="sim-btn" id="sim-empty-stock">🚚 Hammaddeyi Bitir (Kamyon Testi)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="three.min.js"></script>
+  <script src="assets_data.js"></script>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
